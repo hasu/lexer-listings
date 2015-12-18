@@ -7,7 +7,7 @@
 (provide (all-defined-out))
 
 ;; from Ben Lerner
-(define-syntax (R-block stx)
+(define-syntax (Cxx-block stx)
   (syntax-parse stx
     [(_ (~or (~optional (~seq #:indent indent) #:defaults ([indent #'1]))
              (~optional (~seq #:line-numbers line-numbers) #:defaults ([line-numbers #'#f]))
@@ -16,6 +16,7 @@
         arg args ...)
      #'(codeblock #:indent indent #:line-numbers line-numbers #:line-number-sep line-number-sep
                   #:keep-lang-line? #f #:context #'arg
-                "#lang r-lexer\n" arg args ...)]))
-(define-syntax-rule (R arg args ...)
-  (make-element (make-style "RktBlk" '(tt-chars)) (code #:lang "r-lexer" arg args ...)))
+                  "#lang cxx-lexer\n" arg args ...)]))
+
+(define-syntax-rule (Cxx arg args ...)
+  (make-element (make-style "RktBlk" '(tt-chars)) (code #:lang "cxx-lexer" arg args ...)))
