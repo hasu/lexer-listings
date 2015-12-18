@@ -7,3 +7,4 @@
 (define build-deps '("scribble-lib" "racket-doc"))
 (define scribblings '(("scribblings/cxx-lexer.scrbl" ())))
 (define pkg-desc "Lexer for C++")
+(define compile-omit-paths '("experiments"))

@@ -41,9 +41,9 @@ For example,
 @codeblock[#:keep-lang-line? #f]|<|{
   #lang scribble/manual
   @Cxx-block|{
-    f <- function (x) {
-      if (f <= 1) 1;
-      else        x*f(x-1);
+    int f(int x) {
+      if (f <= 1) return 1;
+      else        return x*f(x-1);
     }
   }|
 }|>|
@@ -52,9 +52,9 @@ produces the typeset result:
 
 @nested[#:style 'inset]{
   @Cxx-block|{
-    f <- function (x) {
-      if (f <= 1) 1;
-      else        x * f(x - 1);
+    int f(int x) {
+      if (f <= 1) return 1;
+      else        return x*f(x-1);
     }
   }|
 }

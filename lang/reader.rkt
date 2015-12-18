@@ -21,6 +21,7 @@
 
 (define (get-color-lexer in)
   (let-values ([(lexeme type data start end) (get-syntax-token in)])
+    ;;(writeln (list lexeme type data start end))
     (values lexeme
             type
             data
@@ -64,10 +65,11 @@
    (Identifier (re:: RLetter (re:* RLetterOrDigit)))
    (RLetter (re:or (re:/ "AZ" "az") "_" "$"))
    (RLetterOrDigit (re:or RLetter (re:/ "09")))
-   (KnownTypes (re:or "boolean" "integer" "string"))
-   (Keyword (re:or "if" "else" "this" "function" "for" "while" "in"))
-   (Operator (re:or "=" ">" "<" "!" "~" "?" ":" "==" "<=" ">=" "!=" "&&" "||" "+"
-                   "-" "*" "/" "&" "|" "^" "%" "<<" ">>" "<-" "<<-" "%in%"))
+   (KnownTypes (re:or "void" "bool" "int" "long" "float" "double"))
+   (Keyword (re:or "auto" "class" "const" "const_cast" "dynamic_cast" "else" "enum" "explicit" "for" "goto" "if" "private" "protected" "public" "reinterpret_cast" "return" "static_cast" "struct" "switch" "template" "typedef" "union" "virtual" "while"))
+   (Operator (re:or "=" ">" "<" "!" "~" "?" ":"
+                    "==" "<=" ">=" "!=" "&&" "||" "+"
+                    "-" "*" "/" "&" "|" "^" "%" "<<" ">>"))
    (CR #\015)
    (LF #\012)
    (LineTerminator (re:or CR
@@ -112,9 +114,9 @@
    (Operator (syn-val lexeme 'parenthesis #f start-pos end-pos))
    ((char-set "(){}[];,.")
     (syn-val lexeme 'parenthesis (string->symbol lexeme) start-pos end-pos))
-   ((re:or "NULL" "TRUE" "FALSE"
-           (re:: #\' (re:~ CR LF #\' #\\) #\')
-           (re:: #\' EscapeSequence #\')
+   ((re:or "nullptr" "true" "false"
+           ;;(re:: #\' (re:~ CR LF #\' #\\) #\')
+           ;;(re:: #\' EscapeSequence #\')
            FloatA FloatB FloatC
            (re:: (re:or FloatA FloatB FloatC FloatD) FloatTypeSuffix)
            (re:: (re:or FloatA FloatB FloatC FloatD) FloatTypeSuffix)
@@ -123,15 +125,15 @@
            OctalNumeral
            (re:: DecimalNumeral IntegerTypeSuffix)
            (re:: HexNumeral IntegerTypeSuffix)
-           (re:: OctalNumeral IntegerTypeSuffix))
+           (re:: OctalNumeral IntegerTypeSuffix)
+           )
     (syn-val lexeme 'constant #f start-pos end-pos))
-   (#\' ((colorize-single-string start-pos) input-port))
+   ;;(#\' ((colorize-single-string start-pos) input-port))
    (#\" ((colorize-double-string start-pos) input-port))
    (Keyword (syn-val lexeme 'keyword #f start-pos end-pos))
    (Identifier (syn-val lexeme 'symbol #f start-pos end-pos))
-   ("#" (syn-val lexeme 'comment #f start-pos (read-line-comment input-port)))
+   ("//" (syn-val lexeme 'comment #f start-pos (read-line-comment input-port)))
    ((re:+ WhiteSpace) (syn-val lexeme 'white-space #f start-pos end-pos))
-   (#\032 (values lexeme 'eof #f start-pos end-pos))
+   ;;(#\032 (values lexeme 'eof #f start-pos end-pos))
    ((eof) (values lexeme 'eof #f start-pos end-pos))
    (any-char (syn-val lexeme 'error #f start-pos end-pos))))
-

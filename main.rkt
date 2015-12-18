@@ -19,4 +19,5 @@
                   "#lang cxx-lexer\n" arg args ...)]))
 
 (define-syntax-rule (Cxx arg args ...)
-  (make-element (make-style "RktBlk" '(tt-chars)) (code #:lang "cxx-lexer" arg args ...)))
+  (make-element (make-style "RktBlk" '(tt-chars))
+                (code #:lang "cxx-lexer" arg args ...)))
