@@ -48,7 +48,7 @@
                       #:block? [block? #t]
                       . strs)
   (define-values (tokens bstr) (get-tokens strs))
-  (pretty-print (list tokens bstr))
+  ;;(pretty-print (list tokens bstr))
   (define default-color meta-color)
   ((if block? table (lambda (style lines) (make-element #f lines)))
    block-color
@@ -76,6 +76,7 @@
                        (let ([scribble-style
                               (case style
                                 [(symbol) symbol-color]
+                                [(keyword) keyword-color]
                                 [(parenthesis hash-colon-keyword) paren-color]
                                 [(constant string) value-color]
                                 [(comment) comment-color]
@@ -125,30 +126,6 @@
                     (cond
                       [(eof-object? v) null]
                       [else (datum->syntax #f (cons v (loop)) v v)])))))]
-         [ids (let loop ([e e])
-                (cond
-                  [(and (identifier? e)
-                        (syntax-original? e)
-                        (syntax-position e)
-                        (eq? program-source (syntax-source e)))
-                   (let ([pos (sub1 (syntax-position e))])
-                     (list (list (lambda (str)
-                                   (to-element (syntax-property
-                                                e
-                                                'display-string
-                                                str)
-                                               #:escapes? #f))
-                                 pos
-                                 (+ pos (syntax-span e))
-                                 1)))]
-                  [(syntax? e)
-                   (append (loop (syntax-e e))
-                           (loop (or (syntax-property e 'origin)
-                                     null))
-                           (loop (or (syntax-property e 'disappeared-use)
-                                     null)))]
-                  [(pair? e) (append (loop (car e)) (loop (cdr e)))]
-                  [else null]))]
          [link-mod (lambda (mp-stx priority #:orig? [always-orig? #f])
                      (if (or always-orig?
                              (syntax-original? mp-stx))
@@ -202,21 +179,19 @@
                     null))
               null)]
          [m-tokens
-          (sort (append ids
-                        mods
+          (sort (append mods
                         hash-lang
                         language
-                        (filter (lambda (x) (not (eq? (car x) 'symbol)))
-                                (if has-hash-lang?
-                                    ;; Drop #lang entry:
-                                    (cdr tokens)
-                                    tokens)))
+                        (if has-hash-lang?
+                            ;; Drop #lang entry:
+                            (cdr tokens)
+                            tokens))
                 (lambda (a b)
                   (or (< (cadr a) (cadr b))
                       (and (= (cadr a) (cadr b))
                            (> (cadddr a) (cadddr b))))))])
-    (pretty-print `(tokens: ,tokens))
-    (pretty-print `(tokens: ,m-tokens))
+    ;;(pretty-print `(tokens: ,tokens))
+    ;;(pretty-print `(tokens: ,m-tokens))
     (values m-tokens bstr)))
 
 (define (typeset-code-line lang-line . strs)
