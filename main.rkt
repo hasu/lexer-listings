@@ -4,7 +4,7 @@
          (for-syntax racket/base
                      syntax/parse))
 
-(provide Cxx-block Cxx)
+(provide Cxx-block Cxx current-keyword-style)
 
 (define-syntax (Cxx-block stx)
   (define (maybe kw-stx attr-val)

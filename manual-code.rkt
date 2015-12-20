@@ -7,32 +7,36 @@
          scribble/private/manual-style
          scribble/core
          racket/pretty
-         unstable/debug
          (for-syntax racket/base
                      syntax/parse))
 
 (provide codeblock
          codeblock0
          typeset-code
-         code)
+         code
+         current-keyword-style)
 
 (define-for-syntax (do-codeblock stx)
   (syntax-parse stx
-    [(_ (~seq (~or (~optional (~seq #:indent indent-expr:expr)
-                              #:defaults ([indent-expr #'0])
-                              #:name "#:indent keyword")
-                   (~optional (~seq #:keep-lang-line? keep-lang-line?-expr:expr)
-                              #:defaults ([keep-lang-line?-expr #'#t])
-                              #:name "#:keep-lang-line? keyword")
-                   (~optional (~seq #:line-numbers line-numbers:expr)
-                              #:defaults ([line-numbers #'#f])
-                              #:name "#:line-numbers keyword")
-                   (~optional (~seq #:line-number-sep line-number-sep:expr)
-                              #:defaults ([line-number-sep #'1])
-                              #:name "#:line-number-sep keyword"))
+    [(_ (~seq (~or (~optional
+                    (~seq #:indent indent-expr:expr)
+                    #:defaults ([indent-expr #'0])
+                    #:name "#:indent keyword")
+                   (~optional
+                    (~seq #:keep-lang-line? keep-lang-line?-expr:expr)
+                    #:defaults ([keep-lang-line?-expr #'#t])
+                    #:name "#:keep-lang-line? keyword")
+                   (~optional
+                    (~seq #:line-numbers line-numbers:expr)
+                    #:defaults ([line-numbers #'#f])
+                    #:name "#:line-numbers keyword")
+                   (~optional
+                    (~seq #:line-number-sep line-number-sep:expr)
+                    #:defaults ([line-number-sep #'1])
+                    #:name "#:line-number-sep keyword"))
               ...)
         str ...)
-     #`(typeset-code str ...
+     #'(typeset-code str ...
                      #:keep-lang-line? keep-lang-line?-expr
                      #:indent indent-expr
                      #:line-numbers line-numbers
@@ -40,6 +44,8 @@
 
 (define-syntax (codeblock stx) #`(code-inset #,(do-codeblock stx)))
 (define-syntax (codeblock0 stx) (do-codeblock stx))
+
+(define current-keyword-style (make-parameter value-link-color))
 
 (define (typeset-code #:indent [indent 2]
                       #:keep-lang-line? [keep-lang-line? #t]
@@ -76,7 +82,7 @@
                        (let ([scribble-style
                               (case style
                                 [(symbol) symbol-color]
-                                [(keyword) value-link-color]
+                                [(keyword) (current-keyword-style)]
                                 [(parenthesis hash-colon-keyword) paren-color]
                                 [(constant string) value-color]
                                 [(comment) comment-color]
