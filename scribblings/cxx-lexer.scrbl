@@ -6,6 +6,8 @@
 @title{C++ Lexer}
 @author{Tero Hasu}
 
+Well this is not really a C++ lexer. No attempt has been made to be correct or complete, but this just happens to work for the author's use cases at this time.
+
 @defmodule[cxx-lexer]
 
 The @racket[Cxx] and @racket[Cxx-block] forms are used for typesetting C++ code.
@@ -64,4 +66,4 @@ produces the typeset result:
 
 @section{Acknowledgements}
 
-This software and document is derived from Leif Andersen's work on the @racketmodfont{r-lexer} package.
+This document and parts of the software is based on Leif Andersen's work on the @racketmodfont{r-lexer} package. The rest of the software is based on code from Racket's @racketmodfont{scribble-lib} package.

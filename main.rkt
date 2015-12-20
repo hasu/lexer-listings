@@ -4,28 +4,25 @@
          (for-syntax racket/base
                      syntax/parse))
 
-(provide (all-defined-out))
+(provide Cxx-block Cxx)
 
-;; from Ben Lerner
 (define-syntax (Cxx-block stx)
+  (define (maybe kw-stx attr-val)
+    (if attr-val (list kw-stx attr-val) null))
+  
   (syntax-parse stx
-    [(_ (~seq (~or (~optional
-                    (~seq #:indent indent)
-                    #:defaults ([indent #'0]))
-                   (~optional
-                    (~seq #:line-numbers line-numbers)
-                    #:defaults ([line-numbers #'#f]))
-                   (~optional
-                    (~seq #:line-number-sep line-number-sep)
-                    #:defaults ([line-number-sep #'1])))
+    [(_ (~seq (~or (~optional (~seq #:indent indent))
+                   (~optional (~seq #:line-numbers line-numbers))
+                   (~optional (~seq #:line-number-sep line-number-sep)))
               ...)
         args ...)
-     #'(codeblock #:indent indent
-                  #:line-numbers line-numbers
-                  #:line-number-sep line-number-sep
+     #`(codeblock #,@(maybe #'#:indent (attribute indent))
+                  #,@(maybe #'#:line-numbers (attribute line-numbers))
+                  #,@(maybe #'#:line-number-sep (attribute line-number-sep))
                   #:keep-lang-line? #f
                   "#lang cxx-lexer\n" args ...)]))
 
+;; from Ben Lerner
 (define-syntax-rule (Cxx args ...)
   (make-element (make-style "RktBlk" '(tt-chars))
                 (code #:lang "cxx-lexer" args ...)))
