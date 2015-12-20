@@ -2,10 +2,10 @@
 (require syntax/strip-context
          syntax-color/module-lexer
          syntax-color/lexer-contract
-         "../racket.rkt"
-         "../base.rkt"
-         "manual-scheme.rkt"
-         "manual-style.rkt"
+         scribble/racket
+         scribble/base
+         scribble/private/manual-scheme
+         scribble/private/manual-style
          scribble/core
          (for-syntax racket/base
                      syntax/parse))
@@ -319,58 +319,6 @@
   (for/list ([l (break-list l 'newline)]
              [i (in-naturals (or line-numbers 1))])
     (make-line l i)))
-
-
-;; ----------------------------------------
-
-(module+ test
-  (require racket/list
-           racket/match
-           rackunit)
-
-  (define (tokens strs)
-    (define-values (toks _) (get-tokens strs #f #f))
-    (for/list ([tok (in-list toks)])
-      (match tok
-        [(list _ start end (or 1 2 3))
-         (list 'function start end 1)] ; this looses information
-        [_ tok])))
-
-  (define (make-test-result  lst)
-    (define-values (res _)
-      (for/fold ([result null] [count 12])
-                ([p lst])
-        (define next (+ count (second p)))
-        (define r (if (eq? (first p) 'function) 1 0))
-        (values
-         (cons (list (first p) count next r) result)
-         next)))
-    (list* `(function 0 5 1) `(white-space 5 6 0) `(function 6 12 1) `(function 6 12 1)
-           (reverse res)))
-
-  (check-equal?
-   (tokens (list "#lang racket\n1"))
-   `((function 0 5 1) (white-space 5 6 0) ;"#lang "
-     (function 6 12 1) (function 6 12 1) (white-space 12 13 0) ;"racket\n"
-     (constant 13 14 0))) ; "1"
-  (check-equal?
-   (tokens (list "#lang racket\n" "(+ 1 2)"))
-   (make-test-result
-    '((white-space 1)
-      (parenthesis 1) (function 1)
-      (white-space 1) (constant 1) (white-space 1) (constant 1)
-      (parenthesis 1))))
-  (check-equal?
-   (tokens (list "#lang racket\n(apply x (list y))"))
-   (make-test-result
-    '((white-space 1)
-      (parenthesis 1)
-      (function 5) (white-space 1);apply
-      (function 1) (white-space 1);x
-      (parenthesis 1)
-      (function 4) (white-space 1) (function 1);list y
-      (parenthesis 1)
-      (parenthesis 1)))))
 
 #|
 
