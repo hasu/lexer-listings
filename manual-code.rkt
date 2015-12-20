@@ -1,6 +1,5 @@
 #lang racket/base
-(require syntax/strip-context
-         syntax-color/module-lexer
+(require syntax-color/module-lexer
          syntax-color/lexer-contract
          scribble/racket
          scribble/base
@@ -17,17 +16,12 @@
 
 (define-for-syntax (do-codeblock stx)
   (syntax-parse stx
-    [(_ (~seq (~or (~optional (~seq #:expand expand-expr:expr)
-                              #:defaults ([expand-expr #'#f])
-                              #:name "#:expand keyword")
-                   (~optional (~seq #:indent indent-expr:expr)
+    [(_ (~seq (~or (~optional (~seq #:indent indent-expr:expr)
                               #:defaults ([indent-expr #'0])
-                              #:name "#:expand keyword")
+                              #:name "#:indent keyword")
                    (~optional (~seq #:keep-lang-line? keep-lang-line?-expr:expr)
                               #:defaults ([keep-lang-line?-expr #'#t])
                               #:name "#:keep-lang-line? keyword")
-                   (~optional (~seq #:context context-expr:expr)
-                              #:name "#:context keyword")
                    (~optional (~seq #:line-numbers line-numbers:expr)
                               #:defaults ([line-numbers #'#f])
                               #:name "#:line-numbers keyword")
@@ -37,31 +31,21 @@
               ...)
         str ...)
      #`(typeset-code str ...
-                     #:expand expand-expr
                      #:keep-lang-line? keep-lang-line?-expr
                      #:indent indent-expr
-                     #:context #,(if (attribute context-expr)
-                                     #'context-expr
-                                     (or
-                                      (let ([v #'(str ...)])
-                                        (and (pair? (syntax-e v))
-                                             #`#'#,(car (syntax-e v))))
-                                      #'#f))
                      #:line-numbers line-numbers
                      #:line-number-sep line-number-sep)]))
 
 (define-syntax (codeblock stx) #`(code-inset #,(do-codeblock stx)))
 (define-syntax (codeblock0 stx) (do-codeblock stx))
 
-(define (typeset-code #:context [context #f]
-                      #:expand [expand #f]
-                      #:indent [indent 2]
+(define (typeset-code #:indent [indent 2]
                       #:keep-lang-line? [keep-lang-line? #t]
                       #:line-numbers [line-numbers #f]
                       #:line-number-sep [line-number-sep 1]
                       #:block? [block? #t]
                       . strs)
-  (define-values (tokens bstr) (get-tokens strs context expand))
+  (define-values (tokens bstr) (get-tokens strs))
   (define default-color meta-color)
   ((if block? table (lambda (style lines) (make-element #f lines)))
    block-color
@@ -79,7 +63,9 @@
          [(= pos (cadar tokens))
           (append (let ([style (caar tokens)]
                         [get-str (lambda ()
-                                   (substring bstr (cadar tokens) (caddar tokens)))])
+                                   (substring bstr
+                                              (cadar tokens)
+                                              (caddar tokens)))])
                     (cond
                       [(symbol? style)
                        (let ([scribble-style
@@ -100,7 +86,7 @@
                 (split-lines default-color (substring bstr pos (cadar tokens)))
                 (loop (cadar tokens) tokens))]))))))
 
-;; (listof string) boolean boolean -> tokens string
+;; (listof string) -> tokens string
 ;; tokens is a
 ;; (listof (list T natural natural natural))
 ;; T being a symbol returned as a token type from the languages lexer
@@ -108,8 +94,8 @@
 ;; the first number being the start position
 ;; the second being the end position
 ;; the third 0 if T is a symbol, and 1 or greater if its a function or element
-;; the tokens are sorted by the start end end positions
-(define (get-tokens strs context expand)
+;; the tokens are sorted by the start and end positions
+(define (get-tokens strs)
   (let* ([xstr (apply string-append strs)]
          [bstr (regexp-replace* #rx"(?m:^$)" xstr "\xA0")]
          [in (open-input-string bstr)])
@@ -126,19 +112,13 @@
                                     mode))))))]
            [program-source 'prog]
            [e (parameterize ([read-accept-reader #t])
-                ((or expand 
-                     (lambda (stx) 
-                       (if context
-                           (replace-context context stx)
-                           stx)))
-                 (let ([p (open-input-string bstr)])
-                   (port-count-lines! p)
-                   (let loop ()
-                     (let ([v (read-syntax program-source p)])
-                       (cond
-                        [expand v]
+                (let ([p (open-input-string bstr)])
+                  (port-count-lines! p)
+                  (let loop ()
+                    (let ([v (read-syntax program-source p)])
+                      (cond
                         [(eof-object? v) null]
-                        [else (datum->syntax #f (cons v (loop)) v v)]))))))]
+                        [else (datum->syntax #f (cons v (loop)) v v)])))))]
            [ids (let loop ([e e])
                   (cond
                    [(and (identifier? e)
@@ -155,11 +135,12 @@
                                   pos
                                   (+ pos (syntax-span e))
                                   1)))]
-                   [(syntax? e) (append (loop (syntax-e e))
-                                        (loop (or (syntax-property e 'origin)
-                                                  null))
-                                        (loop (or (syntax-property e 'disappeared-use)
-                                                  null)))]
+                   [(syntax? e)
+                    (append (loop (syntax-e e))
+                            (loop (or (syntax-property e 'origin)
+                                      null))
+                            (loop (or (syntax-property e 'disappeared-use)
+                                      null)))]
                    [(pair? e) (append (loop (car e)) (loop (cdr e)))]
                    [else null]))]
            [link-mod (lambda (mp-stx priority #:orig? [always-orig? #f])
@@ -226,39 +207,23 @@
                                     (> (cadddr a) (cadddr b))))))])
       (values tokens bstr))))
 
-(define (typeset-code-line context expand lang-line . strs)
+(define (typeset-code-line lang-line . strs)
   (typeset-code
-   #:context context
-   #:expand expand
    #:keep-lang-line? (not lang-line)
    #:block? #f
    #:indent 0
-   (let ([s (regexp-replace* #px"(?:\\s*(?:\r|\n|\r\n)\\s*)+" (apply string-append strs) " ")])
+   (let ([s (regexp-replace* #px"(?:\\s*(?:\r|\n|\r\n)\\s*)+"
+                             (apply string-append strs) " ")])
      (if lang-line
          (string-append "#lang " lang-line "\n" s)
          s))))
 
 (define-syntax (code stx)
   (syntax-parse stx
-    [(_ (~seq (~or (~optional (~seq #:expand expand-expr:expr)
-                              #:defaults ([expand-expr #'#f])
-                              #:name "#:expand keyword")
-                   (~optional (~seq #:context context-expr:expr)
-                              #:name "#:context keyword")
-                   (~optional (~seq #:lang lang-line-expr:expr)
-                              #:defaults ([lang-line-expr #'#f])
-                              #:name "#:lang-line keyword"))
-              ...)
+    [(_ (~optional (~seq #:lang lang-line-expr:expr)
+                   #:defaults ([lang-line-expr #'#f]))
         str ...)
-     #`(typeset-code-line #,(if (attribute context-expr)
-                                #'context-expr
-                                (or
-                                 (let ([v #'(str ...)])
-                                   (and (pair? (syntax-e v))
-                                        #`#'#,(car (syntax-e v))))
-                                 #'#f))
-                          expand-expr
-                          lang-line-expr
+     #'(typeset-code-line lang-line-expr
                           str ...)]))
 
 (define (split-lines style s)
@@ -294,7 +259,8 @@
 
   (define lines (break-list l 'newline))
   (define line-cnt (length lines))
-  (define line-cntl (string-length (format "~a" (+ line-cnt (or line-numbers 0)))))
+  (define line-cntl
+    (string-length (format "~a" (+ line-cnt (or line-numbers 0)))))
 
   (define (prepend-line-number n r)
     (define ln (format "~a" n))
