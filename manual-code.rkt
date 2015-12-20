@@ -76,7 +76,7 @@
                        (let ([scribble-style
                               (case style
                                 [(symbol) symbol-color]
-                                [(keyword) keyword-color]
+                                [(keyword) value-link-color]
                                 [(parenthesis hash-colon-keyword) paren-color]
                                 [(constant string) value-color]
                                 [(comment) comment-color]

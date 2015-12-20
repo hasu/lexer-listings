@@ -61,12 +61,18 @@
    (EscapeSequence (re:or "\\b" "\\t" "\\n" "\\f" "\\r" "\\\"" "\\'" "\\\\"
                           (re:: #\\ (re:? (re:/ "03")) (re:/ "07") (re:/ "07"))
                           (re:: #\\ (re:/ "07"))))
-   (Identifier (re:: RLetter (re:* RLetterOrDigit)))
+   (Identifier (re:: RLetter (re:* RLetterOrDigit))) ;; `RktSym`, see "Manual CSS Style Classes"
    (RLetter (re:or (re:/ "AZ" "az") "_" "$"))
    (RLetterOrDigit (re:or RLetter (re:/ "09")))
-   (KnownTypes (re:or "void" "bool" "int" "long" "float" "double"))
-   (Keyword (re:or "auto" "class" "const" "const_cast" "dynamic_cast" "else" "enum" "explicit" "for" "goto" "if" "private" "protected" "public" "reinterpret_cast" "return" "static_cast" "struct" "switch" "template" "typedef" "union" "virtual" "while"))
-   (Operator (re:or "=" ">" "<" "!" "~" "?" ":"
+   (KnownNames
+    (re:or
+     ;; namespace names
+     "std"
+     ;; type names
+     "bool" "char" "double" "float" "int" "long"
+     "short" "signed" "string" "unsigned" "void"))
+   (Keyword (re:or "auto" "class" "const" "const_cast" "dynamic_cast" "else" "enum" "explicit" "for" "goto" "if" "private" "protected" "public" "reinterpret_cast" "return" "static_cast" "struct" "switch" "template" "typedef" "union" "virtual" "while" "MGL_PROTO" "MGL_FUNC" "MGL_API_PROTO" "MGL_API_FUNC" KnownNames)) ;; `RktValLink` (or `RktStxLink`)
+   (Operator (re:or "=" ">" "<" "!" "~" "?" "::" ":"
                     "==" "<=" ">=" "!=" "&&" "||" "+"
                     "-" "*" "/" "&" "|" "^" "%" "<<" ">>"))
    (CR #\015)
