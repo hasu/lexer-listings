@@ -68,10 +68,12 @@
     (re:or
      ;; namespace names
      "std"
+     ;; function names
+     "make_shared"
      ;; type names
      "bool" "char" "double" "float" "int" "long"
      "short" "signed" "string" "unsigned" "void"))
-   (Keyword (re:or "auto" "class" "const" "const_cast" "dynamic_cast" "else" "enum" "explicit" "for" "goto" "if" "private" "protected" "public" "reinterpret_cast" "return" "static_cast" "struct" "switch" "template" "typedef" "union" "virtual" "while" "MGL_PROTO" "MGL_FUNC" "MGL_API_PROTO" "MGL_API_FUNC" KnownNames)) ;; `RktValLink` (or `RktStxLink`)
+   (Keyword (re:or "auto" "class" "const" "const_cast" "dynamic_cast" "else" "enum" "explicit" "for" "goto" "if" "private" "protected" "public" "reinterpret_cast" "return" "static_cast" "struct" "switch" "template" "typedef" "typeid" "union" "virtual" "while" "MGL_PROTO" "MGL_FUNC" "MGL_API_PROTO" "MGL_API_FUNC" KnownNames)) ;; `RktValLink` (or `RktStxLink`)
    (Operator (re:or "=" ">" "<" "!" "~" "?" "::" ":"
                     "==" "<=" ">=" "!=" "&&" "||" "+"
                     "-" "*" "/" "&" "|" "^" "%" "<<" ">>"))
