@@ -1,13 +1,10 @@
 #lang racket/base
-(require syntax-color/module-lexer
-         syntax-color/lexer-contract
-         scribble/racket
+(require scribble/racket
          scribble/base
-         scribble/private/manual-scheme
-         scribble/private/manual-style
          scribble/core
          racket/pretty
          (for-syntax racket/base
+                     racket/syntax
                      syntax/parse))
 
 (provide codeblock
@@ -16,87 +13,63 @@
          code
          current-keyword-style)
 
-(define-for-syntax (do-codeblock stx)
-  (syntax-parse stx
-    [(_ (~seq (~or (~optional
-                    (~seq #:indent indent-expr:expr)
-                    #:defaults ([indent-expr #'0])
-                    #:name "#:indent keyword")
-                   (~optional
-                    (~seq #:keep-lang-line? keep-lang-line?-expr:expr)
-                    #:defaults ([keep-lang-line?-expr #'#t])
-                    #:name "#:keep-lang-line? keyword")
-                   (~optional
-                    (~seq #:line-numbers line-numbers:expr)
-                    #:defaults ([line-numbers #'#f])
-                    #:name "#:line-numbers keyword")
-                   (~optional
-                    (~seq #:line-number-sep line-number-sep:expr)
-                    #:defaults ([line-number-sep #'1])
-                    #:name "#:line-number-sep keyword"))
-              ...)
-        str ...)
-     #'(typeset-code str ...
-                     #:keep-lang-line? keep-lang-line?-expr
-                     #:indent indent-expr
-                     #:line-numbers line-numbers
-                     #:line-number-sep line-number-sep)]))
-
-(define-syntax (codeblock stx) #`(code-inset #,(do-codeblock stx)))
-(define-syntax (codeblock0 stx) (do-codeblock stx))
-
 (define current-keyword-style (make-parameter value-link-color))
 
-(define (typeset-code #:indent [indent 2]
-                      #:keep-lang-line? [keep-lang-line? #t]
+(define-syntax-rule (codeblock . args)
+  (code-inset (typeset-code . args)))
+
+(define-syntax-rule (codeblock0 . args)
+  (typeset-code . args))
+
+(define (typeset-code #:indent [indent 0]
                       #:line-numbers [line-numbers #f]
                       #:line-number-sep [line-number-sep 1]
                       #:block? [block? #t]
+                      #:lexer lexer ;; like `racket-lexer`
                       . strs)
-  (define-values (tokens bstr) (get-tokens strs))
+  (define-values (tokens bstr) (get-tokens lexer strs))
   ;;(pretty-print (list tokens bstr))
   (define default-color meta-color)
   ((if block? table (lambda (style lines) (make-element #f lines)))
    block-color
-   ((if keep-lang-line? values cdr) ; FIXME: #lang can span lines
-    (list->lines
-     indent
-     #:line-numbers line-numbers
-     #:line-number-sep line-number-sep
-     #:block? block?
-     (let loop ([pos 0]
-                [tokens tokens])
-       (cond
-         [(null? tokens)
-          (split-lines default-color (substring bstr pos))]
-         [(eq? (caar tokens) 'white-space)
-          (loop pos (cdr tokens))]
-         [(= pos (cadar tokens))
-          (append (let ([style (caar tokens)]
-                        [get-str (lambda ()
-                                   (substring bstr
-                                              (cadar tokens)
-                                              (caddar tokens)))])
-                    (cond
-                      [(symbol? style)
-                       (let ([scribble-style
-                              (case style
-                                [(symbol) symbol-color]
-                                [(keyword) (current-keyword-style)]
-                                [(parenthesis hash-colon-keyword) paren-color]
-                                [(constant string) value-color]
-                                [(comment) comment-color]
-                                [else default-color])])
-                         (split-lines scribble-style (get-str)))]
-                      [(procedure? style)
-                       (list (style (get-str)))]
-                      [else (list style)]))
-                  (loop (caddar tokens) (cdr tokens)))]
-         [(> pos (cadar tokens))
-          (loop pos (cdr tokens))]
-         [else (append
-                (split-lines default-color (substring bstr pos (cadar tokens)))
-                (loop (cadar tokens) tokens))]))))))
+   (list->lines
+    indent
+    #:line-numbers line-numbers
+    #:line-number-sep line-number-sep
+    #:block? block?
+    (let loop ([pos 0]
+               [tokens tokens])
+      (cond
+        [(null? tokens)
+         (split-lines default-color (substring bstr pos))]
+        [(eq? (caar tokens) 'white-space)
+         (loop pos (cdr tokens))]
+        [(= pos (cadar tokens))
+         (append (let ([style (caar tokens)]
+                       [get-str (lambda ()
+                                  (substring bstr
+                                             (cadar tokens)
+                                             (caddar tokens)))])
+                   (cond
+                     [(symbol? style)
+                      (let ([scribble-style
+                             (case style
+                               [(symbol) symbol-color]
+                               [(keyword) (current-keyword-style)]
+                               [(parenthesis hash-colon-keyword) paren-color]
+                               [(constant string) value-color]
+                               [(comment) comment-color]
+                               [else default-color])])
+                        (split-lines scribble-style (get-str)))]
+                     [(procedure? style)
+                      (list (style (get-str)))]
+                     [else (list style)]))
+                 (loop (caddar tokens) (cdr tokens)))]
+        [(> pos (cadar tokens))
+         (loop pos (cdr tokens))]
+        [else (append
+               (split-lines default-color (substring bstr pos (cadar tokens)))
+               (loop (cadar tokens) tokens))])))))
 
 ;; (listof string) -> tokens string
 ;; tokens is a
@@ -107,117 +80,32 @@
 ;; the second being the end position
 ;; the third 0 if T is a symbol, and 1 or greater if its a function or element
 ;; the tokens are sorted by the start and end positions
-(define (get-tokens strs)
+(define (get-tokens lexer strs)
   (let* ([bstr (regexp-replace* #rx"(?m:^$)"
                                 (apply string-append strs)
                                 "\xA0")]
          [tokens
           (let ([in (open-input-string bstr)])
             (port-count-lines! in)
-            (let loop ([mode #f])
-              (let-values ([(lexeme type data start end backup-delta mode)
-                            (module-lexer in 0 mode)])
+            (let loop ()
+              (let-values ([(lexeme type data start end)
+                            (lexer in)])
+                ;;(writeln (list lexeme type data start end))
                 (if (equal? type 'eof)
                     null
                     (cons (list type (sub1 start) (sub1 end) 0)
-                          (loop (if (dont-stop? mode)
-                                    (dont-stop-val mode)
-                                    mode)))))))]
-         [program-source 'prog]
-         [e (parameterize ([read-accept-reader #t])
-              (let ([p (open-input-string bstr)])
-                (port-count-lines! p)
-                (let loop ()
-                  (let ([v (read-syntax program-source p)])
-                    (cond
-                      [(eof-object? v) null]
-                      [else (datum->syntax #f (cons v (loop)) v v)])))))]
-         [link-mod (lambda (mp-stx priority #:orig? [always-orig? #f])
-                     (if (or always-orig?
-                             (syntax-original? mp-stx))
-                         (let ([mp (syntax->datum mp-stx)]
-                               [pos (sub1 (syntax-position mp-stx))])
-                           (list (list (racketmodname #,mp)
-                                       pos
-                                       (+ pos (syntax-span mp-stx))
-                                       priority)))
-                         null))]
-         ;; This makes sense when `expand' actually expands, and
-         ;; probably not otherwise:
-         [mods (let loop ([e e])
-                 (syntax-case e (module #%require begin)
-                   [(module name lang (mod-beg form ...))
-                    (apply append
-                           (link-mod #'lang 2)
-                           (map loop (syntax->list #'(form ...))))]
-                   [(#%require spec ...)
-                    (apply append
-                           (map (lambda (spec)
-                                  ;; Need to add support for renaming forms, etc.:
-                                  (if (module-path? (syntax->datum spec))
-                                      (link-mod spec 2)
-                                      null))
-                                (syntax->list #'(spec ...))))]
-                   [(begin form ...)
-                    (apply append
-                           (map loop (syntax->list #'(form ...))))]
-                   [else null]))]
-         [has-hash-lang?
-          (regexp-match? #rx"^#lang " bstr)]
-         [hash-lang
-          (if has-hash-lang?
-              (list (list (hash-lang)
-                          0
-                          5
-                          1)
-                    (list 'white-space 5 6 0))
-              null)]
-         [language
-          (if has-hash-lang?
-              (let ([m (regexp-match #rx"^#lang ([-0-9a-zA-Z/._+]+)" bstr)])
-                (if m
-                    (link-mod
-                     #:orig? #t
-                     (datum->syntax #f
-                                    (string->symbol (cadr m))
-                                    (vector 'in 1 6 7 (string-length (cadr m))))
-                     3)
-                    null))
-              null)]
-         [m-tokens
-          (sort (append mods
-                        hash-lang
-                        language
-                        (if has-hash-lang?
-                            ;; Drop #lang entry:
-                            (cdr tokens)
-                            tokens))
-                (lambda (a b)
-                  (or (< (cadr a) (cadr b))
-                      (and (= (cadr a) (cadr b))
-                           (> (cadddr a) (cadddr b))))))])
+                          (loop))))))])
     ;;(pretty-print `(tokens: ,tokens))
-    ;;(pretty-print `(tokens: ,m-tokens))
-    (values m-tokens bstr)))
+    (values tokens bstr)))
 
-(define (typeset-code-line lang-line . strs)
+(define (code #:lexer lexer . strs)
   (typeset-code
-   #:keep-lang-line? (not lang-line)
    #:block? #f
    #:indent 0
+   #:lexer lexer
    (let ([s (regexp-replace* #px"(?:\\s*(?:\r|\n|\r\n)\\s*)+"
                              (apply string-append strs) " ")])
-     (if lang-line
-         (string-append "#lang " lang-line "\n" s)
-         s))))
-
-(define-syntax (code stx)
-  (syntax-parse stx
-    [(_ (~optional (~seq #:lang lang-line-expr:expr)
-                   #:defaults ([lang-line-expr #'#f]))
-        str ...)
-     #'(typeset-code-line lang-line-expr
-                          str ...)]))
+     s)))
 
 (define (split-lines style s)
   (cond

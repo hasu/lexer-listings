@@ -1,4 +1,4 @@
-PKGNAME := cxx-lexer
+PKGNAME := lexer-listings
 VERSION :=
 DISTSUFFIX := $(and $(VERSION),-$(VERSION))
 
@@ -8,6 +8,9 @@ default : setup
 
 setup :
 	raco setup $(PKGNAME)
+
+install :
+	raco pkg install --name $(PKGNAME)
 
 clean :
 	find -name compiled -type d -print0 | xargs -0 --no-run-if-empty rm -r

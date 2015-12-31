@@ -1,10 +1,10 @@
 #lang info
-(define collection "cxx-lexer")
+(define collection "lexer-listings")
 (define deps '("base"
                "parser-tools-lib"
                "scribble-lib"
                "syntax-color-lib"))
 (define build-deps '("racket-doc" "scribble-doc"))
-(define scribblings '(("scribblings/cxx-lexer.scrbl" ())))
-(define pkg-desc "Lexer-like thing for C++")
+(define scribblings '(("scribblings/lexer-listings.scrbl" ())))
+(define pkg-desc "Scribble forms for color-lexer colored code listings.")
 (define compile-omit-paths '("experiments"))

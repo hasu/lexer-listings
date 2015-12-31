@@ -7,7 +7,7 @@
 @title{C++ Lexer}
 @author{Tero Hasu}
 
-Well this is not really a C++ lexer. No attempt has been made to be correct or complete, but this just happens to work for the author's use cases at this time. Also, the code is horribly fragile, as it refers to internal Scribble APIs; if you're not using Racket 6.3 with stock packages, then best of luck.
+Well this is not really a C++ lexer. No attempt has been made to be correct or complete, but this just happens to work for the author's use cases at this time.
 
 @defmodule[cxx-lexer]
 

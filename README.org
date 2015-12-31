@@ -1,1 +1,1 @@
-Rudimentary support for C++ code listings in [[http://docs.racket-lang.org/scribble/][Scribble]] documents.
+Rudimentary support for Racket =color-lexer= highlighted code listings in [[http://docs.racket-lang.org/scribble/][Scribble]] documents.

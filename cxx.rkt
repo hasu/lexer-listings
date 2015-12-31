@@ -2,7 +2,8 @@
 
 (provide cxx-read
          cxx-read-syntax
-         cxx-get-info)
+         cxx-get-info
+         cxx-lexer)
 
 (require parser-tools/lex
          (prefix-in re: parser-tools/lex-sre))
@@ -18,7 +19,7 @@
                        type
                        (list src #f #f start (- end start))))))
 
-(define (get-color-lexer in)
+(define (cxx-lexer in)
   (let-values ([(lexeme type data start end) (get-syntax-token in)])
     ;;(writeln (list lexeme type data start end))
     (values lexeme
@@ -30,7 +31,7 @@
 (define (cxx-get-info key default default-filter)
   (case key
     [(color-lexer)
-     get-color-lexer]
+     cxx-lexer]
     [else
      (default-filter key default)]))
 
