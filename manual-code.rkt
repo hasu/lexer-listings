@@ -2,6 +2,7 @@
 (require scribble/racket
          scribble/base
          scribble/core
+         (only-in scribble/struct make-blockquote)
          racket/pretty
          (for-syntax racket/base
                      racket/syntax
@@ -15,17 +16,23 @@
 
 (define current-keyword-style (make-parameter value-link-color))
 
+;; from scribble/private/manual-style.rkt
+(define code-inset-style 
+  (make-style 'code-inset null))
+(define (code-inset b)
+  (make-blockquote code-inset-style (list b)))
+
 (define-syntax-rule (codeblock . args)
   (code-inset (typeset-code . args)))
 
 (define-syntax-rule (codeblock0 . args)
   (typeset-code . args))
 
-(define (typeset-code #:indent [indent 0]
+(define (typeset-code lexer ;; like `racket-lexer`
+                      #:indent [indent 0]
                       #:line-numbers [line-numbers #f]
                       #:line-number-sep [line-number-sep 1]
                       #:block? [block? #t]
-                      #:lexer lexer ;; like `racket-lexer`
                       . strs)
   (define-values (tokens bstr) (get-tokens lexer strs))
   ;;(pretty-print (list tokens bstr))
@@ -98,11 +105,10 @@
     ;;(pretty-print `(tokens: ,tokens))
     (values tokens bstr)))
 
-(define (code #:lexer lexer . strs)
-  (typeset-code
+(define (code lexer . strs)
+  (typeset-code lexer
    #:block? #f
    #:indent 0
-   #:lexer lexer
    (let ([s (regexp-replace* #px"(?:\\s*(?:\r|\n|\r\n)\\s*)+"
                              (apply string-append strs) " ")])
      s)))

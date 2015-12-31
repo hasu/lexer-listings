@@ -1,49 +1,53 @@
 #lang scribble/manual
-@require[cxx-lexer
-         @for-label[cxx-lexer
-		    scribble/core
-                    racket/base]]
+@require[scribble/manual lexer-listings lexer-listings/cxx
+         @for-label[racket/base
+		    scribble/core scribble/manual
+		    syntax-color/racket-lexer
+                    lexer-listings]]
 
-@title{C++ Lexer}
+@title{Lexer Listings}
 @author{Tero Hasu}
 
-Well this is not really a C++ lexer. No attempt has been made to be correct or complete, but this just happens to work for the author's use cases at this time.
+This library implements something similar to @racketmodname[scribble/manual] module's @racket[codeblock], @racket[codeblock0], @racket[code], and @racket[typeset-code]. However, the typesetting forms and functions here assume foreign code, and no @hash-lang[] to specify the language used. Instead, one must explicitly specify a color lexer function to use, one with the same signature as that of @racket[racket-lexer].
 
-@defmodule[cxx-lexer]
+This package presently includes only one lexer, namely the @racket[cxx-lexer] in the @racketmodfont{lexer-listings/cxx} module.
 
-The @racket[Cxx] and @racket[Cxx-block] forms are used for typesetting C++ code.
+@defmodule[lexer-listings]
 
-@defform[(Cxx str-expr ...+)
+The @racket[lexcodeblock], @racket[lexcodeblock0], @racket[lexcode], and @racket[typeset-lexcode] forms are used for typesetting foreign code, with a lexer explicitly specified as the first argument. The styling of @racket['keyword] tokens can be specified via the @racket[current-lexcode-keyword-style] parameter.
+
+@defform[(lexcode lexer-expr str-expr ...+)
          #:contracts ([str-expr string?])]{
-Similar to the @racket[code] function.
-Parses C++ code from strings into the inline text of the document.
+Similar to @racket[code], but 
+parses code from strings into the inline text of the document
+using the specified lexer.
 
 For example,
 
 @codeblock[#:keep-lang-line? #f]|<|{
   #lang scribble/manual
-  This is @Cxx{1 + 2}.
+  This is @lexcode[cxx-lexer]{1 + 2}.
 }|>|
 
 produces the typeset result:
 
 @nested[#:style 'inset]{
-  This is @Cxx{1 + 2}.
+  This is @lexcode[cxx-lexer]{1 + 2}.
 }
 
-@racket[str-expr] is a list of strings representing C++ code.
-}
+@racket[str-expr] is a list of strings representing code.}
 
-@defform[(Cxx-block str-expr ...+)
+@defform[(lexcodeblock lexer-expr str-expr ...+)
          #:contracts ([str-expr string?])]{
-Similar to the @racket[codeblock] function.
-Parses C++ code from strings into a block in the document.
+Similar to @racket[codeblock], but 
+parses code from strings into a block in the document
+using the specified lexer.
 
 For example,
 
 @codeblock[#:keep-lang-line? #f]|<|{
   #lang scribble/manual
-  @Cxx-block|{
+  @lexcodeblock[cxx-lexer]|{
     int f(int x) {
       if (f <= 1) return 1;
       else        return x*f(x-1);
@@ -54,7 +58,7 @@ For example,
 produces the typeset result:
 
 @nested[#:style 'inset]{
-  @Cxx-block|{
+  @lexcodeblock[cxx-lexer]|{
     int f(int x) {
       if (f <= 1) return 1;
       else        return x*f(x-1);
@@ -62,11 +66,16 @@ produces the typeset result:
   }|
 }
 
-@racket[str-expr] is a list of strings representing C++ code.
-}
+@racket[str-expr] is a list of strings representing code.}
 
-@defparam[current-keyword-style style element-style?]{
-A parameter that controls the style used to render symbols that are C++ keywords or otherwise common names. The default is to use the @tt{RktValLink} Racket manual style, to make known C++ names look similar to Racket ones.
+@defform[(lexcodeblock0 lexer-expr option ... str-expr ...+)]{
+Similar to @racket[codeblock0], but uses the specified lexer.}
+
+@defproc[(typeset-lexcode [strs string?] ...) block?]{
+Similar to @racket[typeset-lexcode], but uses the specified lexer.}
+
+@defparam[current-lexcode-keyword-style style element-style?]{
+A parameter that controls the style used to render symbols that are keywords or otherwise common names. The default is to use the @tt{RktValLink} Racket manual style, to make known names look similar to Racket ones.
 
 The @tt{RktValLink} choice may cause confusion, however, since symbols so styled look like links, but do not get linked to anything. If that doesn't work for your use case, see @secref["manual-css" #:doc '(lib "scribblings/scribble/scribble.scrbl")] for a list of Racket manual styles you might use, or come up with your own alternative.}
 
