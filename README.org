@@ -1,1 +1,4 @@
-Rudimentary support for Racket =color-lexer= highlighted code listings in [[http://docs.racket-lang.org/scribble/][Scribble]] documents.
+Support for [[http://racket-lang.org/][Racket]] =color-lexer= highlighted code listings in [[http://docs.racket-lang.org/scribble/][Scribble]] documents. Must specify a lexer function like =racket-lexer=, for the language of the listing.
+
+Installation with:
+: raco pkg install git://github.com/hasu/lexer-listings

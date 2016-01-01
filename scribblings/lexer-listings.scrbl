@@ -2,13 +2,14 @@
 @require[scribble/manual lexer-listings lexer-listings/cxx
          @for-label[racket/base
 		    scribble/core scribble/manual
+		    syntax-color/default-lexer
 		    syntax-color/racket-lexer
                     lexer-listings]]
 
 @title{Lexer Listings}
 @author{Tero Hasu}
 
-This library implements something similar to @racketmodname[scribble/manual] module's @racket[codeblock], @racket[codeblock0], @racket[code], and @racket[typeset-code]. However, the typesetting forms and functions here assume foreign code, and no @hash-lang[] to specify the language used. Instead, one must explicitly specify a color lexer function to use, one with the same signature as that of @racket[racket-lexer].
+This library implements something similar to @racketmodname[scribble/manual] module's @racket[codeblock], @racket[codeblock0], @racket[code], and @racket[typeset-code]. However, the typesetting forms and functions here assume foreign code, and no @hash-lang[] to specify the language used. Instead, one must explicitly specify a color lexer function to use, one with the same signature as that of @racket[default-lexer] and @racket[racket-lexer].
 
 This package presently includes only one lexer, namely the @racket[cxx-lexer] in the @racketmodfont{lexer-listings/cxx} module.
 
