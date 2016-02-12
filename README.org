@@ -2,3 +2,5 @@ Support for [[http://racket-lang.org/][Racket]] =color-lexer= highlighted code l
 
 Installation with:
 : raco pkg install git://github.com/hasu/lexer-listings
+
+More details can be found in the [[https://hasu.github.io/lexer-listings/][documentation]].

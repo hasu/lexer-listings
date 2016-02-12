@@ -1,10 +1,13 @@
 #lang scribble/manual
-@require[scribble/manual lexer-listings lexer-listings/cxx
+@require[scribble/manual scribble/racket
+         lexer-listings lexer-listings/cxx
          @for-label[racket/base
-		    scribble/core scribble/manual
+		    scribble/core scribble/manual scribble/racket
 		    syntax-color/default-lexer
 		    syntax-color/racket-lexer
                     lexer-listings]]
+
+@(current-lexcode-keyword-style value-link-color)
 
 @title{Lexer Listings}
 @author{Tero Hasu}
@@ -76,9 +79,11 @@ Similar to @racket[codeblock0], but uses the specified lexer.}
 Similar to @racket[typeset-lexcode], but uses the specified lexer.}
 
 @defparam[current-lexcode-keyword-style style element-style?]{
-A parameter that controls the style used to render symbols that are keywords or otherwise common names. The default is to use the @tt{RktValLink} Racket manual style, to make known names look similar to Racket ones.
+A parameter that controls the style used to render symbols that are keywords or perhaps otherwise predefined names. The default is to use @racket[keyword-color] (mapping to @tt{RktKw} in LaTeX).
 
-The @tt{RktValLink} choice may cause confusion, however, since symbols so styled look like links, but do not get linked to anything. If that doesn't work for your use case, see @secref["manual-css" #:doc '(lib "scribblings/scribble/scribble.scrbl")] for a list of Racket manual styles you might use, or come up with your own alternative.}
+One might also consider @racket[value-link-color] (or @tt{RktValLink}), to make known names look similar to @racket[for-label] defined names in Racket listings (as is configured for this document). The @tt{RktValLink} choice could cause confusion, however, since symbols so styled look like links, but do not get linked to anything.
+
+See @secref["manual-css" #:doc '(lib "scribblings/scribble/scribble.scrbl")] for a list of Racket manual styles you might use, or come up with your own alternative @racket[style?] definition.}
 
 @section{Acknowledgements}
 

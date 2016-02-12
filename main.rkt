@@ -16,7 +16,7 @@
   [code lexcode]
   [current-keyword-style current-lexcode-keyword-style]))
 
-(define current-keyword-style (make-parameter value-link-color))
+(define current-keyword-style (make-parameter keyword-color))
 
 ;; from scribble/private/manual-style.rkt
 (define code-inset-style 
