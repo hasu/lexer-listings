@@ -1,8 +1,6 @@
 #lang racket/base
 
-(provide cxx-read
-         cxx-read-syntax
-         cxx-get-info
+(provide cxx-read cxx-read-syntax cxx-get-info
          cxx-lexer)
 
 (require parser-tools/lex
@@ -62,19 +60,44 @@
    (EscapeSequence (re:or "\\b" "\\t" "\\n" "\\f" "\\r" "\\\"" "\\'" "\\\\"
                           (re:: #\\ (re:? (re:/ "03")) (re:/ "07") (re:/ "07"))
                           (re:: #\\ (re:/ "07"))))
-   (Identifier (re:: RLetter (re:* RLetterOrDigit))) ;; `RktSym`, see "Manual CSS Style Classes"
+   (Identifier (re:: RLetter (re:* RLetterOrDigit)))
    (RLetter (re:or (re:/ "AZ" "az") "_" "$"))
    (RLetterOrDigit (re:or RLetter (re:/ "09")))
    (KnownNames
     (re:or
+     ;; C++ type names
+     "bool" "char" "double" "float" "int" "long"
+     "short" "signed" "unsigned" "void"
      ;; namespace names
      "std"
-     ;; function names
-     "make_shared"
-     ;; type names
-     "bool" "char" "double" "float" "int" "long"
-     "short" "signed" "string" "unsigned" "void"))
-   (Keyword (re:or "auto" "class" "const" "const_cast" "dynamic_cast" "else" "enum" "explicit" "for" "goto" "if" "private" "protected" "public" "reinterpret_cast" "return" "static_cast" "struct" "switch" "template" "typedef" "typeid" "union" "virtual" "while" "MGL_PROTO" "MGL_FUNC" "MGL_API_PROTO" "MGL_API_FUNC" KnownNames)) ;; `RktValLink` (or `RktStxLink`)
+     ;; `std` type names
+     "std::function" "std::string" "std::vector" "std::wstring"
+     ;; `std` function names
+     "std::make_shared"
+     ;; Qt type names
+     "qreal" "QCompass" "QObject" "QString" "QWidget"
+     ;; Qt method names
+     "QObject::connect"
+     ;; Qt slot names
+     ;;"readingChanged"
+     ;; Symbian type names
+     "CActive" "CBase" "CleanupStack" "ELeave" "TInt" "TTime" "User"
+     ;; Symbian method names
+     "CleanupStack::PushL" "CleanupStack::Pop" "CleanupStack::PopAndDestroy"
+     "User::LeaveIfError"
+     ))
+   (Keyword
+    (re:or
+     ;; C syntax
+     "FALSE" "NULL" "TRUE"
+     ;; C++ syntax
+     "auto" "class" "const" "const_cast" "constexpr" "decltype" "delete" "dynamic_cast" "else" "enum" "explicit" "false" "for" "goto" "if" "inline" "new" "nullptr" "private" "protected" "public" "reinterpret_cast" "return" "static" "static_assert" "static_cast" "struct" "switch" "template" "this" "true" "typedef" "typeid" "typename" "union" "virtual" "while"
+     ;; CPP syntax
+     "#if" "#else" "#elif" "#endif" "#ifdef" "#ifndef" "#define" "#undef" "#include" "#line"
+     ;; Magnolisp syntax
+     "MGL_PROTO" "MGL_FUNC" "MGL_API_PROTO" "MGL_API_FUNC"
+     ;; Qt syntax
+     "emit" "Q_DECL_CONSTEXPR" "Q_DECL_DELETE" "Q_DECL_FINAL" "Q_DECL_OVERRIDE" "Q_OBJECT" "Q_PROPERTY" "Q_STATIC_ASSERT" "qobject_cast" "SIGNAL" "signals" "SLOT" "slots"))
    (Operator (re:or "=" ">" "<" "!" "~" "?" "::" ":"
                     "==" "<=" ">=" "!=" "&&" "||" "+"
                     "-" "*" "/" "&" "|" "^" "%" "<<" ">>"))
@@ -122,8 +145,7 @@
    (Operator (syn-val lexeme 'parenthesis #f start-pos end-pos))
    ((char-set "(){}[];,.")
     (syn-val lexeme 'parenthesis (string->symbol lexeme) start-pos end-pos))
-   ((re:or "nullptr" "true" "false"
-           ;;(re:: #\' (re:~ CR LF #\' #\\) #\')
+   ((re:or ;;(re:: #\' (re:~ CR LF #\' #\\) #\')
            ;;(re:: #\' EscapeSequence #\')
            FloatA FloatB FloatC
            (re:: (re:or FloatA FloatB FloatC FloatD) FloatTypeSuffix)
@@ -138,8 +160,9 @@
     (syn-val lexeme 'constant #f start-pos end-pos))
    ;;(#\' ((colorize-single-string start-pos) input-port))
    (#\" ((colorize-double-string start-pos) input-port))
-   (Keyword (syn-val lexeme 'keyword #f start-pos end-pos))
-   (Identifier (syn-val lexeme 'symbol #f start-pos end-pos))
+   (Keyword (syn-val lexeme 'frg-keyword #f start-pos end-pos))
+   (KnownNames (syn-val lexeme 'frg-name #f start-pos end-pos))
+   (Identifier (syn-val lexeme 'frg-symbol #f start-pos end-pos))
    ("//" (syn-val lexeme 'comment #f start-pos (read-line-comment input-port)))
    ((re:+ WhiteSpace) (syn-val lexeme 'white-space #f start-pos end-pos))
    ;;(#\032 (values lexeme 'eof #f start-pos end-pos))
@@ -148,7 +171,7 @@
 
 #|
 
-Copyright (c) 2015 leif, Tero
+Copyright (c) 2015-2016 leif, Tero
 
 This file is distributed under the GNU Lesser General Public
 License (LGPL). This means that you can link this software into

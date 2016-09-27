@@ -7,8 +7,6 @@
 		    syntax-color/racket-lexer
                     lexer-listings]]
 
-@(current-lexcode-keyword-style value-link-color)
-
 @title{Lexer Listings}
 @author{Tero Hasu}
 
@@ -16,15 +14,15 @@ This library implements something similar to @racketmodname[scribble/manual] mod
 
 This package presently includes only one lexer, namely the @racket[cxx-lexer] in the @racketmodfont{lexer-listings/cxx} module.
 
+@section{Language-Agnostic API}
+
 @defmodule[lexer-listings]
 
-The @racket[lexcodeblock], @racket[lexcodeblock0], @racket[lexcode], and @racket[typeset-lexcode] forms are used for typesetting foreign code, with a lexer explicitly specified as the first argument. The styling of @racket['keyword] tokens can be specified via the @racket[current-lexcode-keyword-style] parameter.
+The @racket[lexcodeblock], @racket[lexcodeblock0], @racket[lexcode], and @racket[typeset-lexcode] forms are used for typesetting foreign code, with a lexer explicitly specified as the first argument.
 
 @defform[(lexcode lexer-expr str-expr ...+)
          #:contracts ([str-expr string?])]{
-Similar to @racket[code], but 
-parses code from strings into the inline text of the document
-using the specified lexer.
+Similar to @racket[code], but parses code from strings into the inline text of the document using the specified lexer. The @racket[str-expr]essions must yield strings of code to be tokenized.
 
 For example,
 
@@ -37,22 +35,18 @@ produces the typeset result:
 
 @nested[#:style 'inset]{
   This is @lexcode[cxx-lexer]{1 + 2}.
-}
-
-@racket[str-expr] is a list of strings representing code.}
+}}
 
 @defform[(lexcodeblock lexer-expr str-expr ...+)
          #:contracts ([str-expr string?])]{
-Similar to @racket[codeblock], but 
-parses code from strings into a block in the document
-using the specified lexer.
+Similar to @racket[codeblock], but parses code from strings into a block in the document using the lexer specified by @racket[lexer-expr]. The @racket[str-expr]essions must yield strings of code to be tokenized.
 
 For example,
 
 @codeblock[#:keep-lang-line? #f]|<|{
   #lang scribble/manual
   @lexcodeblock[cxx-lexer]|{
-    int f(int x) {
+    int f(int const& x) {
       if (f <= 1) return 1;
       else        return x*f(x-1);
     }
@@ -63,33 +57,35 @@ produces the typeset result:
 
 @nested[#:style 'inset]{
   @lexcodeblock[cxx-lexer]|{
-    int f(int x) {
+    int f(int const& x) {
       if (f <= 1) return 1;
       else        return x*f(x-1);
     }
   }|
-}
-
-@racket[str-expr] is a list of strings representing code.}
+}}
 
 @defform[(lexcodeblock0 lexer-expr option ... str-expr ...+)]{
 Similar to @racket[codeblock0], but uses the specified lexer.}
 
 @defproc[(typeset-lexcode [strs string?] ...) block?]{
-Similar to @racket[typeset-lexcode], but uses the specified lexer.}
+Similar to @racket[typeset-code], but uses the specified lexer.}
 
-@defparam[current-lexcode-keyword-style style element-style?]{
-A parameter that controls the style used to render symbols that are keywords or perhaps otherwise predefined names. The default is to use @racket[keyword-color] (mapping to @tt{RktKw} in LaTeX).
+@deftogether[
+ (@defthing[foreign-keyword-color style?]
+  @defthing[foreign-name-color style?]
+  @defthing[foreign-symbol-color style?])]{
+Additional styles supported by @racket[typeset-lexcode] (in addition to Racket's @racket[meta-color], @racket[value-color], @etc).
+These are intended to be used for foreign keywords, other predefined names, and non-predefined names, respectively.
+These styles correspond to the additional token types @racket['frg-keyword], @racket['frg-name], @racket['frg-symbol], as may be assigned by a language-specific color lexer.
 
-One might also consider @racket[value-link-color] (or @tt{RktValLink}), to make known names look similar to @racket[for-label] defined names in Racket listings (as is configured for this document). The @tt{RktValLink} choice could cause confusion, however, since symbols so styled look like links, but do not get linked to anything.
-
-See @secref["manual-css" #:doc '(lib "scribblings/scribble/scribble.scrbl")] for a list of Racket manual styles you might use, or come up with your own alternative @racket[style?] definition.}
+When rendering a document, the styles translate as @tt{FrgKw}, @tt{FrgName}, and @tt{FrgSym}. If tokens of the associated types are emitted, definitions for those style classes must then be provided in a renderer-specific way.
+See @secref["manual-css" #:doc '(lib "scribblings/scribble/scribble.scrbl")] for a list of Racket manual style classes, which can serve as examples for providing definitions for @tt{FrgKw}, etc. See this package's @filepath{style.css} for an example definition for CSS.}
 
 @section{Acknowledgements}
 
 This document and parts of the software are based on Leif Andersen's work on the @racketmodfont{r-lexer} package. The rest of the software is based on code from Racket's @racketmodfont{scribble-lib} package.
 
-@; Copyright (c) 2015 leif, Tero
+@; Copyright (c) 2015-2016 leif, Tero
 @; 
 @; This file is distributed under the GNU Lesser General Public
 @; License (LGPL). This means that you can link this software into

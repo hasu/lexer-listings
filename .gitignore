@@ -6,3 +6,4 @@ compiled/
 /doc/
 /gh-pages/
 /local.mk
+/.dir-locals.el
