@@ -1,0 +1,18 @@
+/* these are similar to the "racket.css" definitions */
+
+.FrgKw, .FrgName, .FrgSym {
+  font-family: monospace;
+  white-space: inherit;
+}
+
+.FrgKw {
+  color: blue;
+}
+
+.FrgName {
+  color: black;
+}
+
+.FrgSym {
+  color: #262680;
+}
